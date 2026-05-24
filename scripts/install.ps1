@@ -39,7 +39,9 @@ param(
 
     # --- Ensure mode (dep_ensure.py entry point) ---
     [string]$Ensure = "",
-    [switch]$PostInstall
+    [switch]$PostInstall,
+    [switch]$LocalSource,
+    [string]$PipMirrorUrl = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -75,8 +77,8 @@ try {
 # Configuration
 # ============================================================================
 
-$RepoUrlSsh = "git@github.com:NousResearch/hermes-agent.git"
-$RepoUrlHttps = "https://github.com/NousResearch/hermes-agent.git"
+$RepoUrlSsh = "git@github.com:cppypanda/hermes-agent.git"
+$RepoUrlHttps = "https://github.com/cppypanda/hermes-agent.git"
 $PythonVersion = "3.11"
 $NodeVersion = "22"
 
@@ -930,6 +932,11 @@ function Install-SystemPackages {
 function Install-Repository {
     Write-Info "Installing to $InstallDir..."
 
+    if ($LocalSource) {
+        Write-Info "LocalSource mode: using pre-bundled source from $InstallDir"
+        return
+    }
+
     $didUpdate = $false
 
     if (Test-Path $InstallDir) {
@@ -1175,6 +1182,11 @@ function Install-Venv {
 
 function Install-Dependencies {
     Write-Info "Installing dependencies..."
+    
+    if ($PipMirrorUrl) {
+        Write-Info "Using PyPI mirror: $PipMirrorUrl"
+        $env:UV_INDEX_URL = $PipMirrorUrl
+    }
     
     Push-Location $InstallDir
     
